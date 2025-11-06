@@ -1,4 +1,3 @@
-// server.js
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -66,9 +65,6 @@ const orderRoutes = require('./routes/orderRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 const authAdminRoutes = require('./routes/authAdminRoutes');
 
-
-
-
 // === FIREBASE ===
 const serviceAccount = require('./firebase-service-account.json');
 admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
@@ -83,6 +79,14 @@ app.use(cors({
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
+
+// === NO CACHE HEADERS ===
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
 
 // === ROUTES ===
 app.use('/api/categories', categoryRoutes);
@@ -103,7 +107,11 @@ app.use('/api/auth', authAdminRoutes);
 // === SOCKET.IO SETUP ===
 const server = http.createServer(app);
 io = new Server(server, {
-  cors: { origin: "*", methods: ["GET", "POST"] }
+  cors: { 
+    origin: "*", 
+    methods: ["GET", "POST"],
+    credentials: true
+  }
 });
 
 app.set('io', io);
@@ -130,6 +138,6 @@ connectDB();
 
 // === START SERVER ===
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on http://94.136.191.124:${PORT}`);
 });
